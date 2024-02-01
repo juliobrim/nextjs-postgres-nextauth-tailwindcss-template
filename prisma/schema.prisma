@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model break_log {
+  id              Int           @id(map: "break_pkey") @default(autoincrement())
+  start_time      DateTime?     @db.Time(6)
+  end_time        DateTime?     @db.Time(6)
+  break_reason_id Int?
+  machine_id      Int?
+  break_reason    break_reason? @relation(fields: [break_reason_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_break_reason")
+  machine         machine?      @relation(fields: [machine_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_machine")
+}
+
+model break_reason {
+  id          Int         @id @default(autoincrement())
+  name        String?     @db.VarChar(100)
+  description String?     @db.VarChar(255)
+  break_log   break_log[]
+}
+
+model downtime {
+  id                 Int              @id @default(autoincrement())
+  start_time         DateTime?        @db.Time(6)
+  end_time           DateTime?        @db.Time(6)
+  downtime_reason_id Int?
+  machine_id         Int?
+  downtime_reason    downtime_reason? @relation(fields: [downtime_reason_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_downtime_reason")
+  machine            machine?         @relation(fields: [machine_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_machine")
+}
+
+model downtime_reason {
+  id          Int        @id @default(autoincrement())
+  name        String?    @db.VarChar(100)
+  description String?    @db.VarChar(255)
+  downtime    downtime[]
+}
+
+model machine {
+  id                  Int                   @id @default(autoincrement())
+  model               String?               @db.VarChar(100)
+  aqquired_date       DateTime?             @db.Date
+  capacity            Float?                @db.Real
+  break_log           break_log[]
+  downtime            downtime[]
+  production_order    production_order[]
+  production_register production_register[]
+}
+
+model permission {
+  id              Int               @id @default(autoincrement())
+  title           Int?
+  description     String?
+  user_permission user_permission[]
+}
+
+model production_order {
+  id                    Int      @id @default(autoincrement())
+  target_amount         Int?
+  ideal_production_rate Int?
+  machine_id            Int?
+  machine               machine? @relation(fields: [machine_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_machine")
+}
+
+model production_register {
+  id               Int       @id @default(autoincrement())
+  total_batches    Int?
+  rejected_batches Int?
+  timestamp        DateTime? @db.Time(6)
+  machine_id       Int?
+  machine          machine?  @relation(fields: [machine_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_machine")
+}
+
+model shift {
+  id         Int          @id @default(autoincrement())
+  name       String?      @db.VarChar(100)
+  start_time DateTime?    @db.Time(6)
+  end_time   DateTime?    @db.Time(6)
+  user_shift user_shift[]
+}
+
+model user {
+  id              Int               @id @default(autoincrement())
+  name            String?           @db.VarChar(100)
+  email           String?           @db.VarChar(255)
+  password        String?
+  user_permission user_permission[]
+  user_shift      user_shift[]
+}
+
+model user_permission {
+  id            Int         @id @default(autoincrement())
+  user_id       Int?
+  permission_id Int?
+  permission    permission? @relation(fields: [permission_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_permission")
+  user          user?       @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user")
+}
+
+model user_shift {
+  id       Int    @id @default(autoincrement())
+  user_id  Int?
+  shift_id Int?
+  shift    shift? @relation(fields: [shift_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_shift")
+  user     user?  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user")
+}
